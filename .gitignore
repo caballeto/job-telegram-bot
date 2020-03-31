@@ -1,0 +1,8 @@
+__pycache__/*
+nohup.out
+bot/grad.csv
+bot/intern.csv
+bot/list.txt
+bot/__pycache__/*
+techsheet-web/src/__pycache__/*
+Miniconda*

@@ -3,7 +3,7 @@ import time
 
 from mysql import connector
 
-FILE = 'grad.csv'
+FILE = 'intern.csv'
 
 db = connector.connect(
     host=config.DB_HOST,

@@ -99,13 +99,25 @@ def extract_type(title):
 
 
 def jobs_from_ids(job_ids):
-    return [job_from_id(job_id) for job_id in job_ids]
+    jobs = []
+    for job_id in job_ids:
+        try:
+            jobs.append(job_from_id(job_id))
+        except Exception:
+            pass
+    return jobs
+
+
+def extract_company(soup):
+    companies = soup.select('a[class*="topcard__org-name-link"]')
+    return companies[0] if companies else "Unknown"
 
 
 def job_from_id(job_id, base=config.LI_BASE_URL):
+    print(f'{base}{job_id})
     r = requests.get(f'{base}{job_id}')
     soup = BeautifulSoup(r.text, 'html.parser')
-    company = soup.find('a', class_='topcard__org-name-link topcard__flavor--black-link').string
+    company = extract_company(soup)soup.find('a', class_='topcard__org-name-link topcard__flavor--black-link').string
     title = soup.find(class_='topcard__title').string
     print(job_id)
     print(company)

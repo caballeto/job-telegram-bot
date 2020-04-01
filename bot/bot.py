@@ -59,9 +59,10 @@ def help(update, context):
         'Here\'s what I can do.\n\n'
         '/start - start talking with bot\n'
         '/help - help message with command descriptions\n'
-        '/all - show all open positions\n'
-        '/newgrad - show all new-grad positions\n'
-        '/intern - show all intern positions\n')
+        '/intern - show open intern positions\n'
+        '/newgrad - show open new grad positions\n'
+        '/experienced - show positions for experienced candidates\n'
+        '/new - propose position job posting\n')
 
 
 def experienced(update, context):

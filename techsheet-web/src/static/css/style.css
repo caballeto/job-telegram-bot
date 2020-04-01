@@ -461,3 +461,7 @@ footer ul li a:hover, footer ul li a:focus, footer ul li a:active, footer ul li 
   border-radius: 4px;
   padding: 15px 35px;
 }
+
+li.list-inline-item {
+  margin-top: 10px;
+}

@@ -13,3 +13,6 @@ DB_HOST = 'localhost'
 DB_USER = os.environ.get('DB_USER')
 DB_PASS = os.environ.get('DB_PASS')
 DB_NAME = 'LinkedinJobAlerts'
+
+# api
+API_KEY = os.environ.get('API_KEY')

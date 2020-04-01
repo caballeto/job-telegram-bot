@@ -6,6 +6,7 @@ import config
 import requests
 import time
 
+from datetime import datetime, date, timedelta
 from db import save_new_jobs
 from bs4 import BeautifulSoup
 
@@ -17,6 +18,10 @@ def extract_body(payload):
         return '\n'.join([extract_body(part.get_payload()) for part in payload])
 
 
+def get_yesterday(fmt="%d-%b-%Y"):
+    return (datetime.now() - timedelta(1)).strftime(fmt)
+
+
 def get_connection(email_addr, password):
     conn = imaplib.IMAP4_SSL("imap.gmail.com", 993)
     conn.login(email_addr, password)
@@ -25,7 +30,8 @@ def get_connection(email_addr, password):
 
 
 def load_emails(conn, from_client):
-    typ, data = conn.search(None, 'FROM "{0}"'.format(from_client))
+    command = '(SINCE "{0}")'.format(get_yesterday())
+    typ, data = conn.search(None, command)
     emails = []
 
     try:
@@ -110,14 +116,14 @@ def jobs_from_ids(job_ids):
 
 def extract_company(soup):
     companies = soup.select('a[class*="topcard__org-name-link"]')
-    return companies[0] if companies else "Unknown"
+    return companies[0].string if companies else "Unknown"
 
 
 def job_from_id(job_id, base=config.LI_BASE_URL):
-    print(f'{base}{job_id})
+    print(f'{base}{job_id}')
     r = requests.get(f'{base}{job_id}')
     soup = BeautifulSoup(r.text, 'html.parser')
-    company = extract_company(soup)soup.find('a', class_='topcard__org-name-link topcard__flavor--black-link').string
+    company = extract_company(soup)
     title = soup.find(class_='topcard__title').string
     print(job_id)
     print(company)
@@ -130,6 +136,7 @@ def job_from_id(job_id, base=config.LI_BASE_URL):
 def main(args):
     con = get_connection(config.EMAIL, config.PASS)
     emails = load_emails(con, config.FROM)
+    print("LEN EMAILS: {0}".format(len(emails)))
     job_ids = find_job_ids(emails)
     jobs = jobs_from_ids(job_ids)
     save_new_jobs(jobs)

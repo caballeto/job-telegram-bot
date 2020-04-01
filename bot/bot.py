@@ -27,16 +27,17 @@ bot.
 import logging
 import config
 
-from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
-                          ConversationHandler)
-from db import get_internships, get_grads, get_swes, get_all
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, MessageEntity
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+from db import get_internships, get_grads, get_swes, get_all, save_link
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
+LINK = 1
 
 
 def start(update, context):
@@ -46,9 +47,10 @@ def start(update, context):
         'Here\'s what I can do.\n\n'
         '/start - start talking with bot\n'
         '/help - help message with command descriptions\n'
-        '/all - show all open internship/new-grad positions\n'
-        '/newgrad - show all new-grad positions\n'
-        '/intern - show all intern positions\n')
+        '/intern - show open intern positions\n'
+        '/newgrad - show open new grad positions\n'
+        '/experienced - show positions for experienced candidates\n'
+        '/new - propose position job posting\n')
 
 
 def help(update, context):
@@ -62,13 +64,8 @@ def help(update, context):
         '/intern - show all intern positions\n')
 
 
-def all(update, context):
-    jobs = get_grads()
-    jobs.extend(get_internships())
-    logger.info('Printing {0} ALL jobs'.format(len(jobs)))
-    update.message.reply_text('Printing all open internship and grad positions')
-    for job in jobs:
-        update.message.reply_text(job['link'])
+def experienced(update, context):
+    update.message.reply_text('This feature is still in development. We\'ll notify you as soon as it will be available :)')
 
 
 def newgrad(update, context):
@@ -87,23 +84,53 @@ def intern(update, context):
         update.message.reply_text(job['link'])
 
 
+def new(update, context):
+    logger.info('Adding new link proposal')
+    update.message.reply_text('Thanks for contributing, please send me a URL to job posting. Send /cancel to cancel command.')
+    return LINK
+
+
+def received_link(update, context):
+    user_data = context.user_data
+    user = update.message.from_user
+    link = update.message.text
+    save_link(link, user['username'])
+    update.message.reply_text('Thanks {0}, I will review the link during the next 24 hours, and will add it if everything is cool!'.format(user['first_name']))
+    return ConversationHandler.END
+
+
+def cancel(update, context):
+    user = update.message.from_user
+    logger.info("User %s canceled the conversation", user.first_name)
+    update.message.reply_text('Okay, hope to talk about it again some day.')
+    return ConversationHandler.END
+
+
 def error(update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
 
 def main():
-    # Create the Updater and pass it your bot's token.
-    # Make sure to set use_context=True to use the new context based callbacks
-    # Post version 12 this will no longer be necessary
-    updater = Updater("1003656495:AAFHvQX8ZEb3RS83fHD72iaFI49pxKQMoa4", use_context=True)
+    updater = Updater(config.API_KEY, use_context=True)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
+    new_handler = ConversationHandler(
+        entry_points=[CommandHandler('new', new)],
+
+        states = {
+            LINK: [MessageHandler(Filters.entity(MessageEntity.URL), received_link)]
+        },
+
+        fallbacks=[CommandHandler('cancel', cancel)]
+    )
+
+    dp.add_handler(new_handler)
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('help', help))
-    dp.add_handler(CommandHandler('all', all))
+    dp.add_handler(CommandHandler('experienced', experienced))
     dp.add_handler(CommandHandler('newgrad', newgrad))
     dp.add_handler(CommandHandler('intern', intern))
 

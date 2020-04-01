@@ -19,7 +19,13 @@ def close(db):
     db.close()
 
 
-def save_new_jobs(jobs, db=DB):
+def save_link(link, username):
+    cursor = get_cursor()
+    cursor.execute('INSERT INTO proposals (link, posted_by) VALUES (%s, %s)', (link, username))
+    DB.commit()
+
+
+def save_new_jobs(jobs):
     cursor = get_cursor()
 
     for job in jobs:
@@ -28,9 +34,7 @@ def save_new_jobs(jobs, db=DB):
         if cursor.fetchone() is None:  # job is new
             cursor.execute('INSERT INTO jobs (link, company, title, post_time, type) VALUES (%s, %s, %s, %s, %s)',
             (link, job[1], job[2], job[3], job[4]))
-            db.commit()
-
-    close(db)
+            DB.commit()
 
 
 def get_internships():
